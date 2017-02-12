@@ -1,0 +1,137 @@
+<!doctype html>
+<html>
+
+<style>
+#results {
+	font-family: monospace;
+}
+</style>
+
+<body onload="load()">
+
+<p>Source letters (5-10): <input id="letters" value="bonerface" autofocus /></p>
+
+<h2 tabindex="0">Results (<span id="num_results">0</span>)</h2>
+
+<ul id="results"></ul>
+
+<script>
+var re = /^[a-z]{5,10}$/;
+
+var $letters = document.querySelector('#letters');
+var $num_results = document.querySelector('#num_results');
+var $results = document.querySelector('#results');
+
+$letters.oninput = function(e) {
+	if (re.test(this.value)) {
+		var words = test(this.value);
+		$num_results.textContent = words.length;
+		$results.innerHTML = words.map(function(word) {
+			return '<li>' + word + '</li>';
+		}).join('');
+	}
+};
+
+function count(letters) {
+	var count = {};
+	for (var i = 0; i < letters.length; i++) {
+		var letter = letters[i];
+		if (!count[letter]) count[letter] = 0;
+		count[letter]++;
+	}
+
+	return count;
+}
+
+function test(letters) {
+	var done = {};
+	var words = [];
+
+	for (var i = 0; i < letters.length; i++) {
+		for (var j = 0; j < letters.length; j++) {
+			for (var k = 0; k < letters.length; k++) {
+				var short = letters[i] + letters[j] + letters[k];
+				if (!done[short]) {
+					done[short] = 1;
+
+					var index = sessionStorage.getItem('w_' + short);
+					if (index) {
+						index.split(',').forEach(word => words.push(word));
+					}
+				}
+			}
+		}
+	}
+
+	var available = count(letters);
+	words = words.filter(word => {
+		word = count(word);
+		for (var l in word) {
+			if (!available[l] || available[l] < word[l]) {
+				return false;
+			}
+		}
+
+		return true;
+	});
+
+	words.sort(function(a, b) {
+		return b.length - a.length;
+	});
+
+	return words;
+}
+
+function ready() {
+	console.debug('ready');
+	$letters.oninput();
+}
+
+function load() {
+	console.debug('load');
+
+	if (!sessionStorage.w_ass) {
+		Object.keys(sessionStorage).filter(function(key) {
+			return key.substr(0, 2) == 'w_';
+		}).forEach(function(key) {
+			sessionStorage.removeItem(key);
+		});
+		return loadWords(ready);
+	}
+	ready();
+}
+
+function loadWords(callback) {
+	console.debug('loadWords');
+	console.time('fetch');
+	fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words.txt').then(rsp => rsp.text())
+		.then(txt => {
+			console.timeEnd('fetch');
+
+			var words = txt.toLowerCase().split(/[\r\n|\r|\n]+/).filter(word => re.test(word));
+
+			console.time('save words');
+			var index = [], lastShort;
+			words.forEach((word, i) => {
+				var short = word.substr(0, 3);
+				if (short != lastShort) {
+					if (index.length) {
+						sessionStorage.setItem('w_' + short, index.join(','));
+					}
+
+					index.length = 0;
+				}
+
+				index.push(word);
+				lastShort = short;
+			});
+			console.timeEnd('save words');
+
+			callback();
+		});
+}
+</script>
+
+</body>
+
+</html>
