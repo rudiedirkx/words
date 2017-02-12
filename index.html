@@ -116,7 +116,7 @@ function loadWords(callback) {
 				var short = word.substr(0, 3);
 				if (short != lastShort) {
 					if (index.length) {
-						sessionStorage.setItem('w_' + short, index.join(','));
+						sessionStorage.setItem('w_' + lastShort, index.join(','));
 					}
 
 					index.length = 0;
