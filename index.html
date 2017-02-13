@@ -1,34 +1,60 @@
 <!doctype html>
 <html>
 
-<style>
-#results {
-	font-family: monospace;
-}
-</style>
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta charset="utf-8" />
+	<title>Words</title>
+	<style>
+	body.loading:before {
+		content: "LOADING...";
+		position: fixed;
+		top: 10%;
+		left: 10%;
+		right: 10%;
+		bottom: 10%;
+		background: black;
+		color: white;
+		line-height: 400px;
+		line-height: 80vh;
+		text-align: center;
+		font-size: 40px;
+		font-size: 15vh;
+		outline: solid 999px rgba(0, 0, 0, 0.8);
+	}
+	#results {
+		font-family: monospace;
+	}
+	</style>
+</head>
 
-<body onload="load()">
+<body class="loading" onload="load()">
 
-<p>Source letters (5-10): <input id="letters" value="bonerface" autofocus /></p>
+<p>Source letters (5-10): <input id="letters" value="bknraeitm" /></p>
 
 <h2 tabindex="0">Results (<span id="num_results">0</span>)</h2>
 
 <ul id="results"></ul>
 
 <script>
-var re = /^[a-z]{5,10}$/;
+var re = /^[a-z]{5,10}$/i;
 
 var $letters = document.querySelector('#letters');
 var $num_results = document.querySelector('#num_results');
 var $results = document.querySelector('#results');
 
-$letters.oninput = function(e) {
+$letters.onkeyup = function(e, callback) {
 	if (re.test(this.value)) {
-		var words = test(this.value);
-		$num_results.textContent = words.length;
-		$results.innerHTML = words.map(function(word) {
-			return '<li>' + word + '</li>';
-		}).join('');
+		var letters = this.value.toLowerCase();
+		setTimeout(function() {
+			var words = test(letters);
+			$num_results.textContent = words.length;
+			$results.innerHTML = words.map(function(word) {
+				return '<li>' + word + '</li>';
+			}).join('');
+
+			callback && callback();
+		});
 	}
 };
 
@@ -44,6 +70,8 @@ function count(letters) {
 }
 
 function test(letters) {
+	console.time('search');
+
 	var done = {};
 	var words = [];
 
@@ -56,7 +84,9 @@ function test(letters) {
 
 					var index = sessionStorage.getItem('w_' + short);
 					if (index) {
-						index.split(',').forEach(word => words.push(word));
+						index.split(',').forEach(function(word) {
+							words.push(word);
+						});
 					}
 				}
 			}
@@ -64,7 +94,7 @@ function test(letters) {
 	}
 
 	var available = count(letters);
-	words = words.filter(word => {
+	words = words.filter(function(word) {
 		word = count(word);
 		for (var l in word) {
 			if (!available[l] || available[l] < word[l]) {
@@ -75,6 +105,8 @@ function test(letters) {
 		return true;
 	});
 
+	console.timeEnd('search');
+
 	words.sort(function(a, b) {
 		return b.length - a.length;
 	});
@@ -84,7 +116,13 @@ function test(letters) {
 
 function ready() {
 	console.debug('ready');
-	$letters.oninput();
+
+	setTimeout(function() {
+		$letters.onkeyup({}, function() {
+			document.body.classList.remove('loading');
+			$letters.focus();
+		});
+	}, 100);
 }
 
 function load() {
@@ -98,37 +136,48 @@ function load() {
 		});
 		return loadWords(ready);
 	}
-	ready();
+
+	setTimeout(ready, 100);
 }
 
 function loadWords(callback) {
 	console.debug('loadWords');
+
+	// try {
+
 	console.time('fetch');
-	fetch('https://raw.githubusercontent.com/dwyl/english-words/master/words.txt').then(rsp => rsp.text())
-		.then(txt => {
-			console.timeEnd('fetch');
+	var xhr = new XMLHttpRequest;
+	xhr.open('get', 'https://raw.githubusercontent.com/dwyl/english-words/master/words.txt', true);
+	xhr.send();
+	xhr.onload = function(e) {
+		console.timeEnd('fetch');
 
-			var words = txt.toLowerCase().split(/[\r\n|\r|\n]+/).filter(word => re.test(word));
+		var txt = this.responseText;
+		var words = txt.toLowerCase().split(/[\r\n|\r|\n]+/).filter(function(word) {
+			return re.test(word);
+		});
 
-			console.time('save words');
-			var index = [], lastShort;
-			words.forEach((word, i) => {
-				var short = word.substr(0, 3);
-				if (short != lastShort) {
-					if (index.length) {
-						sessionStorage.setItem('w_' + lastShort, index.join(','));
-					}
-
-					index.length = 0;
+		console.time('save words');
+		var index = [], lastShort;
+		words.forEach(function(word, i) {
+			var short = word.substr(0, 3);
+			if (short != lastShort) {
+				if (index.length) {
+					sessionStorage.setItem('w_' + lastShort, index.join(','));
 				}
 
-				index.push(word);
-				lastShort = short;
-			});
-			console.timeEnd('save words');
+				index.length = 0;
+			}
 
-			callback();
+			index.push(word);
+			lastShort = short;
 		});
+		console.timeEnd('save words');
+
+		callback();
+	};
+
+	// } catch (ex) { alert(ex); }
 }
 </script>
 
