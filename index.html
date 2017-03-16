@@ -50,8 +50,11 @@ $letters.onkeyup = function(e, callback) {
 		setTimeout(function() {
 			var words = test(letters);
 			$num_results.textContent = words.length;
+			var ll = 0;
 			$results.innerHTML = words.map(function(word) {
-				return '<li>' + word + '</li>';
+				var pref = word.length != ll ? '<li>' + word.length + ':</li>' : '';
+				ll = word.length;
+				return pref + '<li>' + word + '</li>';
 			}).join('');
 
 			callback && callback();
