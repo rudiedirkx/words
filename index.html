@@ -45,6 +45,11 @@ var $num_results = document.querySelector('#num_results');
 var $results = document.querySelector('#results');
 
 $letters.onkeyup = function(e, callback) {
+	if (this.value === this._value) {
+		return;
+	}
+	this._value = this.value;
+
 	if (re.test(this.value)) {
 		var letters = this.value.toLowerCase();
 		setTimeout(function() {
