@@ -57,7 +57,7 @@ $letters.onkeyup = function(e, callback) {
 			$num_results.textContent = words.length;
 			var ll = 0;
 			$results.innerHTML = words.map(function(word) {
-				var pref = word.length != ll ? '<li>' + word.length + ':</li>' : '';
+				var pref = word.length != ll ? '<li>' + (ll ? '<br></li><li>' : '') + word.length + ':</li>' : '';
 				ll = word.length;
 				return pref + '<li>' + word + '</li>';
 			}).join('');
@@ -117,6 +117,10 @@ function test(letters) {
 	console.timeEnd('search');
 
 	words.sort(function(a, b) {
+		if (b.length == a.length) {
+			return a < b ? -1 : 1;
+		}
+
 		return b.length - a.length;
 	});
 
