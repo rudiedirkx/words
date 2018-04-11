@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<meta charset="utf-8" />
+	<title>Favorite words</title>
+	<link rel="shortcut icon" href="favicon.png" />
+	<style>
+	* {
+		box-sizing: border-box;
+	}
+	textarea {
+		width: 100%;
+		height: 8em;
+	}
+	</style>
+</head>
+
+<body>
+
+<p>
+	Benchmark text:<br>
+	<textarea id="text-bench"></textarea>
+	<pre id="most-bench"></pre>
+</p>
+<p>
+	Your text:<br>
+	<textarea id="text-yours"></textarea>
+	<pre id="most-yours"></pre>
+</p>
+
+<script src="favorites.js"></script>
+<script>
+const faves = new FavWords(
+	document.querySelector('#text-bench'),
+	document.querySelector('#text-yours')
+);
+faves.listen();
+
+['bench', 'yours'].map((dict) => {
+	fetch(`favorites-${dict}.txt`)
+		.then((rsp) => rsp.text())
+		.then((txt) => faves.set(dict, txt));
+});
+</script>
+
+</body>
+
+</html>
