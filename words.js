@@ -1,43 +1,3 @@
-<!doctype html>
-<html>
-
-<head>
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<meta charset="utf-8" />
-	<title>Words</title>
-	<link rel="shortcut icon" href="favicon.png" />
-	<style>
-	body.loading:before {
-		content: "LOADING...";
-		position: fixed;
-		top: 10%;
-		left: 10%;
-		right: 10%;
-		bottom: 10%;
-		background: black;
-		color: white;
-		line-height: 400px;
-		line-height: 80vh;
-		text-align: center;
-		font-size: 40px;
-		font-size: 15vh;
-		outline: solid 999px rgba(0, 0, 0, 0.8);
-	}
-	#results {
-		font-family: monospace;
-	}
-	</style>
-</head>
-
-<body class="loading" onload="load()">
-
-<p>Source letters (5-10): <input id="letters" value="bknraeitm" /></p>
-
-<h2 tabindex="0">Results (<span id="num_results">0</span>)</h2>
-
-<ul id="results"></ul>
-
-<script>
 var re = /^[a-z]{5,10}$/i;
 
 var $letters = document.querySelector('#letters');
@@ -156,8 +116,6 @@ function load() {
 function loadWords(callback) {
 	console.debug('loadWords');
 
-	// try {
-
 	console.time('fetch');
 	var xhr = new XMLHttpRequest;
 	xhr.open('get', 'https://raw.githubusercontent.com/dwyl/english-words/master/words.txt', true);
@@ -189,11 +147,4 @@ function loadWords(callback) {
 
 		callback();
 	};
-
-	// } catch (ex) { alert(ex); }
 }
-</script>
-
-</body>
-
-</html>
